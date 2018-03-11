@@ -1,0 +1,216 @@
+---
+title: "DailChanges"
+output: html_document
+---
+
+We're going to need these packages:
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+library(rvest)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(lubridate)
+````
+
+Create a list of all the pages we're going to access
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
+pagelist <- c(
+  paste("https://en.wikipedia.org/wiki/Members_of_the_1st_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_2nd_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_3rd_D%C3%A1il", sep=""),
+  paste("https://en.wikipedia.org/wiki/Members_of_the_", 4:20 ,"th_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_21st_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_22nd_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_23rd_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_", 24:30 ,"th_D%C3%A1il", sep=""),
+  paste("https://en.wikipedia.org/wiki/Members_of_the_31st_D%C3%A1il", sep=""), 
+  paste("https://en.wikipedia.org/wiki/Members_of_the_32nd_D%C3%A1il", sep=""))
+
+#/html/body/div[3]/div[3]/div[4]/div/table[3]
+````
+
+Scrape wikipedia
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
+election <- pagelist[1] %>%
+  read_html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[4]') %>%
+  html_table(fill=T)%>%
+  unlist(recursive=F) %>%
+  as.data.frame()
+election <- election[-1,c(1,2,4)]
+colnames(election) <- c("constituency", "name", "party")
+
+  
+  
+#group
+election$dailno <- 1
+
+
+
+allelections <- election
+
+for (i in 2:28){
+  election <- pagelist[i] %>%
+  read_html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[3]') %>%
+  html_table(fill=T)%>%
+  unlist(recursive=F) %>%
+  as.data.frame()
+  election <- election[-1,c(1,2,4)]
+  colnames(election) <- c("constituency", "name", "party")
+  election$dailno <- i
+  allelections <- rbind(allelections, election)
+ 
+}
+
+
+for (i in 29:32){
+  election <- pagelist[i] %>%
+  read_html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[3]') %>%
+  html_table(fill=T)%>%
+  unlist(recursive=F) %>%
+  as.data.frame()
+  election <- election[,c(3,4,2)]
+  colnames(election) <- c("name","constituency",  "party")
+#  election <- election[,c(2,3,1)]
+  election$dailno <- i
+  allelections <- rbind(allelections, election)
+ 
+}
+
+````
+
+clean-up
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+allelections <- allelections2
+
+allelections$name <- allelections$name %>% 
+  str_remove("???") %>% 
+  str_remove("\\[.*")
+
+allelections$party <- allelections$party %>% 
+  str_remove("\\(\\d.*") %>% 
+  str_trim()
+  
+allelections$party[allelections$dailno > 6 & allelections$party == "Sinn Féin"] <- "Provisional Sinn Féin"
+
+eldates <- data.frame(dailno=1:32, date= dmy(
+  c("21-01-1919", "16-08-1921", "09-09-1922", "19-09-1923", "23-06-1927", "11-10-1927", "09-03-1932", "08-02-1933", "21-07-1937", "30-06-1938", "01-07-1943", "09-06-1944", "18-02-1948", "13-06-1951", "02-06-1954", "20-03-1957", "11-10-1961", "21-04-1965", "02-07-1969", "14-03-1973", "05-07-1977", "30-06-1981", "09-03-1982", "14-12-1982", "10-03-1987", "29-06-1989", "14-12-1992", "26-06-1997", "06-06-2002", "14-06-2007", "09-03-2011", "10-03-2016")), 
+  endate= dmy(
+  c("10-05-1921", "08-06-1922", "09-08-1923", "20-05-1927", "16-08-1927", "17-12-1931", "22-12-1932", "14-06-1937", "25-05-1938", "26-06-1943", "10-05-1944", "11-12-1947", "02-05-1951", "23-04-1954", "13-12-1956", "01-09-1961", "11-03-1965", "21-05-1965", "05-02-1973", "25-05-1977", "21-05-1981", "27-01-1982", "04-11-1982", "20-01-1987", "25-05-1989", "05-11-1992", "15-05-1997", "25-04-2002", "26-04-2007", "01-02-2011", "03-02-2016", "17-03-2018")
+  ))
+
+eldates$duration <- difftime( eldates$endate, eldates$date)
+eldates$middate <- (eldates$date + eldates$duration/2)
+
+allelections <- left_join(allelections, eldates, by="dailno")
+
+parties <- unique(allelections$party)
+
+
+partygp <-c("Sinn Féin", "Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Gael", "Labour Party", "Farmers' Party", "Sinn Féin (Anti-Treaty) - Fianna Fáil", "Other", "Independent" ,"Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Gael","Sinn Féin (Anti-Treaty) - Fianna Fáil","Sinn Féin (Anti-Treaty) - Fianna Fáil" , "Other", "Other", "Other" ,"Other",   "Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn Féin - Provisional Sinn Féin - Sinn Féin","Other", "Other", "Other", "Sinn Féin - The Workers' Party - Workers' Party" ,"Other" ,"Other","Sinn Féin - The Workers' Party - Workers' Party" ,"Progressive Democrats","Green Party","Democratic Left" ,               "Socialist Party - People Before Profit Alliance - AAA-PBP" ,   "Socialist Party - People Before Profit Alliance - AAA-PBP" ,  "Other" ,"Socialist Party - People Before Profit Alliance - AAA-PBP", "Other", "Other")
+
+partygp2 <-c("Sinn Féin", "Sinn Féin (Pro-Treaty)", "Labour Party", "Farmers' Party", "Sinn Féin (Anti-Treaty)", "Other", "Independent" ,"Cumann na nGaedheal","Republican","Fianna Fáil" , "Other", "Other", "Other" ,"Other",   "Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn Féin","Other", "Other", "Other", "Sinn Féin - The Workers' Party - Workers' Party" ,"Other" ,"Other","Sinn Féin - The Workers' Party - Workers' Party" ,"Progressive Democrats","Green Party","Democratic Left" ,               "AAA-PBP" ,   "AAA-PBP" ,  "Other" ,"AAA-PBP", "Other", "Other")
+
+  
+pinf <- data.frame(party= unique(allelections$party), partygp, partygp2)  
+
+allelections <- left_join(allelections, pinf, by="party")
+  
+size<- allelections %>% 
+  group_by(dailno) %>% 
+  summarise(dailsize= n())
+
+allelections <- left_join(allelections, size, by='dailno')
+
+
+
+partyprop<- allelections %>% 
+  group_by(dailno, date, endate, duration, middate, partygp,party) %>% 
+  summarise( seatnum=n(), ) %>%
+  left_join( size, by='dailno') %>%
+  mutate(seatprop =100*seatnum/dailsize)
+
+firstel <- allelections %>%
+  group_by(partygp2) %>%
+  summarise(firstel =min(dailno), firstdate=min(date))
+
+
+allelections$reelected <- FALSE
+
+
+for (i in 1:nrow(allelections)){
+  allelections$reelected[i] <- allelections$name[i] %in% allelections$name[allelections$dailno==allelections$dailno[i]-1]
+}
+
+allelections$reelected[i] <- allelections$name[i] %in% allelections$name[allelections$dailno==allelections$dailno[i]-1]
+
+reelprop <- allelections %>%
+  group_by(dailno,reelected, date ) %>%
+  summarise(numre = n()) %>%
+  left_join(size, by='dailno') %>%
+  mutate(percre=100*numre/dailsize) %>%
+  subset(reelprop$reelected == TRUE)
+
+
+
+
+````
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
+
+ggplot(data=partyprop, aes(x=middate, y=seatprop,fill=partygp))+
+  geom_bar(stat='identity', alpha=0.6, width=100)+
+  scale_fill_manual(values=c("orange", "brown", "darkred", "grey", "light green", "darkcyan", "red", "white", "yellow", "darkgreen","darkgreen", "red", "forest green", "cornflower blue", "black", "grey"))+
+  theme_minimal()
+
+
+
+
+````
+ggplot(reelprop, aes(x=date, y=percre))+geom_area()
+
+
+````
+
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+ggplot(allelections, aes(x=dailno, y=name, colour=partygp))+geom_point()
+theme(legend.position = 'none')+geom_line()
+
+````
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+i <- 29
+election <- pagelist[i] %>%
+  html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[3]') %>%
+  html_table(fill=T)%>%
+  unlist(recursive=F) %>%
+  as.data.frame()
+  election <- election[,2:4]
+  colnames(election) <- c("party","constituency", "name")
+
+  election$dailno <- i
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
+election <- pagelist[11] %>%
+  html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[3]') %>%
+  html_table(fill=T)%>%
+  unlist(recursive=F) %>%
+  as.data.frame()
+
+
+````
