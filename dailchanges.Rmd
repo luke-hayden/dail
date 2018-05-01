@@ -89,7 +89,7 @@ for (i in 29:32){
 clean-up
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
-allelections <- allelections2
+#allelections <- allelections2
 
 allelections$name <- allelections$name %>% 
   str_remove("???") %>% 
@@ -122,9 +122,9 @@ partygp <-c("Sinn Féin", "Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Ga
             
             
             
-            "Progressive Democrats","Green Party","Other", "(Provisional) Sinn Féin" ,               "Socialist Party - People Before Profit Alliance - AAA-PBP" ,   "Socialist Party - People Before Profit Alliance - AAA-PBP" ,  "Other" ,"Socialist Party - People Before Profit Alliance - AAA-PBP", "Other", "Other")
+            "Progressive Democrats","Green Party","Other", "(Provisional) Sinn Féin" ,               "Socialist Party - People Before Profit Alliance - AAA-PBP" ,   "Socialist Party - People Before Profit Alliance - AAA-PBP" ,"Socialist Party - People Before Profit Alliance - AAA-PBP", "Other", "Other")
 
-partygp2 <-c("Sinn Féin", "Sinn Féin (Pro-Treaty)", "Labour Party", "Farmers' Party", "Sinn Féin (Anti-Treaty)", "Other", "Independent" ,"Cumann na nGaedheal","Republican","Fianna Fáil" , "Other", "Other", "Other" ,"Other",   "Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn Féin (modern)","Other", "Other", "Other", "Workers' Party" ,"Other" ,"Other","Progressive Democrats","Green Party","Other", "(Provisional) Sinn Féin" ,               "AAA-PBP" ,   "AAA-PBP" ,  "Other" ,"AAA-PBP", "Other", "Other")
+partygp2 <-c("Sinn Féin", "Sinn Féin (Pro-Treaty)", "Labour Party", "Farmers' Party", "Sinn Féin (Anti-Treaty)", "Other", "Independent" ,"Cumann na nGaedheal","Republican","Fianna Fáil" , "Other", "Other", "Other" ,"Other",   "Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn Féin (modern)","Other", "Other", "Other", "Workers' Party" ,"Other" ,"Other","Progressive Democrats","Green Party","Other", "(Provisional) Sinn Féin" ,               "AAA-PBP" ,   "AAA-PBP"   ,"AAA-PBP", "Other", "Other")
 
   
 pinf <- data.frame(party= unique(allelections$party), partygp, partygp2)  
@@ -223,7 +223,7 @@ govdf$tsur <- word(govdf$Name, -1)
 ```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
 
 #main data:
-ggplot(data=partyprop, aes(x=date, y=seatprop,fill=partygp))+
+p=ggplot(data=partyprop, aes(x=date, y=seatprop,fill=partygp))+
   geom_bar(stat='identity', alpha=1, width=250)+
   scale_fill_manual(values=c("white","grey","black","darkgreen",  "darkcyan", "darkgreen", "darkgoldenrod", "light green",  "blue", "red3", "darkgreen","red",  "cornflower blue", "forest green" , "darkgreen"))+
   scale_alpha_manual(values=c(0,1))+
@@ -260,6 +260,9 @@ ggplot(data=partyprop, aes(x=date, y=seatprop,fill=partygp))+
   theme(panel.grid.minor.y = element_blank())+
   ggtitle("A Graphical History of Dáil Éireann")+
   theme(plot.title = element_text(hjust = 0.5))
+
+
+ggsave("dailsummary.png", plot=p, device="png", height=7, width=11,dpi=300)
 
 
 #ggsave(plot=p, height=7,width=11,dpi=200, filename=paste("maindail.pdf"), useDingbats=FALSE, limitsize = FALSE)
