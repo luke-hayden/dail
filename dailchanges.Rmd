@@ -69,7 +69,7 @@ for (i in 2:28){
 }
 
 
-for (i in 29:32){
+for (i in 29:31){
   election <- pagelist[i] %>%
   read_html() %>%
   html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[3]') %>%
@@ -84,27 +84,50 @@ for (i in 29:32){
  
 }
 
+
+election <- pagelist[32] %>%
+  read_html() %>%
+  html_nodes(xpath='/html/body/div[3]/div[3]/div[4]/div/table[4]') %>%
+  html_table(fill=T)%>%
+  unlist(recursive=F) %>%
+  as.data.frame()
+  election <- election[,c(3,4,2)]
+  colnames(election) <- c("name","constituency",  "party")
+#  election <- election[,c(2,3,1)]
+  election$dailno <- 32
+allelections <- rbind(allelections, election)
 ````
 
 clean-up
+
+
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
 #allelections <- allelections2
 
 allelections$name <- allelections$name %>% 
-  str_remove("???") %>% 
-  str_remove("\\[.*")
+  str_remove("\\?\\?\\?") %>% 
+  str_remove("\\[.*") %>%
+   str_remove("â€ ")
+
+
+````
+
+clean-up
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
 
 allelections$party <- allelections$party %>% 
   str_remove("\\(\\d.*") %>% 
   str_trim()
   
-allelections$party[allelections$dailno > 25& allelections$party == "Sinn Féin"] <- "Provisional Sinn Féin"
+allelections$party[allelections$dailno > 25& allelections$party == "Sinn FÃ©in"] <- "Provisional Sinn FÃ©in"
 
 eldates <- data.frame(dailno=1:32, date= dmy(
   c("21-01-1919", "16-08-1921", "09-09-1922", "19-09-1923", "23-06-1927", "11-10-1927", "09-03-1932", "08-02-1933", "21-07-1937", "30-06-1938", "01-07-1943", "09-06-1944", "18-02-1948", "13-06-1951", "02-06-1954", "20-03-1957", "11-10-1961", "21-04-1965", "02-07-1969", "14-03-1973", "05-07-1977", "30-06-1981", "09-03-1982", "14-12-1982", "10-03-1987", "29-06-1989", "14-12-1992", "26-06-1997", "06-06-2002", "14-06-2007", "09-03-2011", "10-03-2016")), 
   endate= dmy(
-  c("10-05-1921", "08-06-1922", "09-08-1923", "20-05-1927", "16-08-1927", "17-12-1931", "22-12-1932", "14-06-1937", "25-05-1938", "26-06-1943", "10-05-1944", "11-12-1947", "02-05-1951", "23-04-1954", "13-12-1956", "01-09-1961", "11-03-1965", "21-05-1965", "05-02-1973", "25-05-1977", "21-05-1981", "27-01-1982", "04-11-1982", "20-01-1987", "25-05-1989", "05-11-1992", "15-05-1997", "25-04-2002", "26-04-2007", "01-02-2011", "03-02-2016", "17-03-2018")
+  c("10-05-1921", "08-06-1922", "09-08-1923", "20-05-1927", "16-08-1927", "17-12-1931", "22-12-1932", "14-06-1937", "25-05-1938", "26-06-1943", "10-05-1944", "11-12-1947", "02-05-1951", "23-04-1954", "13-12-1956", "01-09-1961", "11-03-1965", "21-05-1969", "05-02-1973", "25-05-1977", "21-05-1981", "27-01-1982", "04-11-1982", "20-01-1987", "25-05-1989", "05-11-1992", "15-05-1997", "25-04-2002", "26-04-2007", "01-02-2011", "03-02-2016", "17-03-2018")
   ))
 
 eldates$duration <- difftime( eldates$endate, eldates$date)
@@ -118,13 +141,13 @@ allelections <- left_join(allelections, eldates, by="dailno")
 parties <- unique(allelections$party)
 
 
-partygp <-c("Sinn Féin", "Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Gael", "Labour Party", "Farmers' Party", "Sinn Féin (Anti-Treaty) - Fianna Fáil", "Other", "Independent" ,"Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Gael","Sinn Féin (Anti-Treaty) - Fianna Fáil","Sinn Féin (Anti-Treaty) - Fianna Fáil" , "Other", "Other", "Other" ,"Other",   "Sinn Féin (Pro-Treaty) - Cumann na nGaedheal - Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn Féin - Provisional Sinn Féin - Sinn Féin","Other", "Other", "Other", "Sinn Féin - The Workers' Party - Workers' Party" ,"Other" ,"Other",
+partygp <-c("Sinn FÃ©in", "Sinn FÃ©in (Pro-Treaty) - Cumann na nGaedheal - Fine Gael", "Labour Party", "Farmers' Party", "Sinn FÃ©in (Anti-Treaty) - Fianna FÃ¡il", "Other", "Independent" ,"Sinn FÃ©in (Pro-Treaty) - Cumann na nGaedheal - Fine Gael","Sinn FÃ©in (Anti-Treaty) - Fianna FÃ¡il","Sinn FÃ©in (Anti-Treaty) - Fianna FÃ¡il" , "Other", "Other", "Other" ,"Other",   "Sinn FÃ©in (Pro-Treaty) - Cumann na nGaedheal - Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn FÃ©in - Provisional Sinn FÃ©in - Sinn FÃ©in","Other", "Other", "Other","Other", "Sinn FÃ©in - The Workers' Party - Workers' Party" ,"Other" ,
             
             
             
-            "Progressive Democrats","Green Party","Other", "(Provisional) Sinn Féin" ,               "Socialist Party - People Before Profit Alliance - AAA-PBP" ,   "Socialist Party - People Before Profit Alliance - AAA-PBP" ,"Socialist Party - People Before Profit Alliance - AAA-PBP", "Other", "Other")
+            "Progressive Democrats","Green Party","Other", "(Provisional) Sinn FÃ©in" ,               "Socialist Party - People Before Profit Alliance - AAA-PBP" ,   "Socialist Party - People Before Profit Alliance - AAA-PBP" ,"Socialist Party - People Before Profit Alliance - AAA-PBP", "Socialist Party - People Before Profit Alliance - AAA-PBP","Other", "Other")
 
-partygp2 <-c("Sinn Féin", "Sinn Féin (Pro-Treaty)", "Labour Party", "Farmers' Party", "Sinn Féin (Anti-Treaty)", "Other", "Independent" ,"Cumann na nGaedheal","Republican","Fianna Fáil" , "Other", "Other", "Other" ,"Other",   "Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn Féin (modern)","Other", "Other", "Other", "Workers' Party" ,"Other" ,"Other","Progressive Democrats","Green Party","Other", "(Provisional) Sinn Féin" ,               "AAA-PBP" ,   "AAA-PBP"   ,"AAA-PBP", "Other", "Other")
+partygp2 <-c("Sinn FÃ©in", "Sinn FÃ©in (Pro-Treaty)", "Labour Party", "Farmers' Party", "Sinn FÃ©in (Anti-Treaty)", "Other", "Independent" ,"Cumann na nGaedheal","Republican","Fianna FÃ¡il" , "Other", "Other", "Other" ,"Other",   "Fine Gael", "Clann na Talmhan","Other", "Clann na Poblachta","Sinn FÃ©in (modern)","Other", "Other", "Other", "Workers' Party" ,"Other" ,"Other","Progressive Democrats","Green Party","Other", "(Provisional) Sinn FÃ©in" ,               "AAA-PBP" ,   "AAA-PBP"   ,"AAA-PBP","AAA-PBP", "Other", "Other")
 
   
 pinf <- data.frame(party= unique(allelections$party), partygp, partygp2)  
@@ -235,7 +258,7 @@ p=ggplot(data=partyprop, aes(x=date, y=seatprop,fill=partygp))+
   geom_text(inherit.aes=FALSE, data=impdates, aes(x=date, y=-36, label=desc), angle=0, size=3)+
   #party labels:
   geom_label(inherit.aes=FALSE, data=firstel, aes(x=firstdate, y=ypos, label=partygp2, fill=partygp),colour="white", alpha=0.75)+
-  #dáil number:
+  #dÃ¡il number:
   geom_text(inherit.aes=FALSE, data=eldates, aes(x=date, y=105, label= dailno), size=2.8,angle=45, check_overlap = TRUE)+
   #dail size
 #  geom_point(inherit.aes=FALSE, data=sizesm, aes(x=date, y= -3) ,size=6, colour="darkgrey")+
@@ -251,14 +274,14 @@ p=ggplot(data=partyprop, aes(x=date, y=seatprop,fill=partygp))+
   geom_text(aes(x=ymd("1916-01-21"), y=-29, label="Government"), size=3.2, angle=90)+
   geom_rect(inherit.aes=FALSE,data=govdf,  aes(ymin=-23, ymax=-30, xmin= govstart, xmax=govend, fill=partygp), alpha=0.7)+
   geom_segment(inherit.aes=FALSE,data=govdf,  aes(y=-23, yend=-30, x= govstart, xend=govstart),colour="black",alpha=0.7)+
-  scale_y_discrete(breaks=c(0,25,50,75,100), name="Dáil Seats")+
+  scale_y_discrete(breaks=c(0,25,50,75,100), name="DÃ¡il Seats")+
  ylim(-37,105)+
-  ylab("     Dáil Seats (%)")+
+  ylab("     DÃ¡il Seats (%)")+
   #extra theming
   theme(legend.position = 'none') +
   theme(panel.grid.major.y = element_blank())+
   theme(panel.grid.minor.y = element_blank())+
-  ggtitle("A Graphical History of Dáil Éireann")+
+  ggtitle("A Graphical History of DÃ¡il Ã‰ireann")+
   theme(plot.title = element_text(hjust = 0.5))
 
 
@@ -268,6 +291,35 @@ ggsave("dailsummary.png", plot=p, device="png", height=7, width=11,dpi=300)
 #ggsave(plot=p, height=7,width=11,dpi=200, filename=paste("maindail.pdf"), useDingbats=FALSE, limitsize = FALSE)
 #  geom_text_repel(inherit.aes=FALSE,data=govdf,  aes(label=tsur, x=govstart, y=-32), angle=40, direction="y")
 ````
+
+
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
+careers <- allelections %>% 
+  group_by(name) %>%
+  summarise(first=min(dailno), last=max(dailno), tot=n()) %>%
+  mutate(length=last-first +1)
+
+ 
+topcareers <- subset(careers, !careers$name %in% c("Tom Fitzpatrick", "Brian Lenihan", "John O'Leary" )) %>%
+  top_n(n=20, wt=tot)
+topcareers$name <- factor(topcareers$name, levels=topcareers$name[order(topcareers$first)])
+topcel <- inner_join(allelections, topcareers, by="name") %>%
+  filter((name=="Tom McEllistrim" & dailno>18)==F) %>%
+  filter((name=="Michael Kennedy" & dailno>20)==F)
+
+topcel$name <- factor(topcel$name, levels=topcareers$name[order(topcareers$first)])
+                      
+                      
+ggplot(topcel, aes(x=date, y=name, colour=party))+
+  geom_segment(aes(x=date, xend=endate, y=name, yend=name), size=3.5)+
+  theme_minimal() +
+  scale_colour_manual(values=c("black","cornflower blue", "darkgoldenrod", "forest green", "light blue", "grey", "green", "red3","red","green","darkgreen", "cyan", "green") )
+  geom_point()
+ 
+#ggplot(topcel, aes(x=dailno, y=name, colour=party))+geom_point()
+```
 
 
 
